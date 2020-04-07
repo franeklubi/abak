@@ -10,4 +10,4 @@ main: main.asm
 
 run: main.asm
 	make
-	./abak
+	./abak 10
