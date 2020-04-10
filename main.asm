@@ -1,44 +1,81 @@
 
 %define BACKLIGHT_STRING "intel_backlight"
+%define BACKLIGHT_PATH "/sys/class/backlight/",BACKLIGHT_STRING,"/"
 
-section .bss
-    stack_start     resb 8
+SEEK_SET    equ 0
+SEEK_CUR    equ 1
+SEEK_END    equ 2
+SEEK_DATA   equ 3
+SEEK_HOLE   equ 4
 
 
 section .data
-    BACKLIGHT_PATH  db "/sys/class/backlight/",BACKLIGHT_STRING,"/",0
+    BRIGHTNESS_PATH db BACKLIGHT_PATH,"brightness",0
+    MAX_PATH        db BACKLIGHT_PATH,"max_brightness",0
+
+    dummy_percentage    db "96",10
 
 
 section .text
     global _start
 
 _start:
-    mov [stack_start], rsp
-    call check_args
+    mov rdi, BRIGHTNESS_PATH
+    call read_from_file
 
-    mov rdi, 0
-    jmp exit_with_cleanup
+__yo:
 
-
-
-check_args:
-    mov rbx, [stack_start]
-    mov rax, [rbx]  ; getting argc off the stack
+    pop rax         ; getting argc off the stack
     cmp rax, 1
-    jne _ca_continue
+    jne _interpret  ; if argc == 1
 
-    ; mov string to some register and printing
-    mov rdi, 1
-    jmp exit_with_cleanup
+    call print_percentage
 
-_ca_continue:
-    add rbx, 16     ; getting address of pointer to the arg (second argv)
-    mov rbx, [rbx]  ; dereferencing the address
+    jmp exit_normally
+
+_interpret:
+    pop rax
+    pop rax         ; getting pointer to second arg off the stack
+
+    jmp exit_normally
+
+
+; put file path into rdi
+read_from_file:
+    ; opening file
+    mov rax, 2      ; sys open
+    mov rsi, 0      ; readonly
+    mov rdx, 0440o
+    syscall         ; opening file
+
+    cmp rax, -1
+    je exit_error   ; if the file couldn't be opened
+
+    ; getting size of the file
+    mov rdi, rax    ; moving posix file descriptor into rdi
+    mov rax, 8
+    mov rsi, 0
+    mov rdx, SEEK_END
+    syscall
 
     ret
 
 
-exit_with_cleanup:
-    mov rax, 60
+print_percentage:
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, dummy_percentage
+    mov rdx, 3
     syscall
 
+    ret
+
+
+exit_error:
+    mov rdi, 1
+    jmp exit
+exit_normally:
+    xor rdi, rdi
+exit:
+    mov rax, 60
+    syscall
