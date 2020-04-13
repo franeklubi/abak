@@ -11,3 +11,11 @@ main: main.asm
 run: main.asm
 	make
 	./abak 10
+
+strace: main.asm
+	make
+	strace ./abak
+
+debug: main.asm
+	make
+	gdb abak
