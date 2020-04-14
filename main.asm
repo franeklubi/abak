@@ -15,7 +15,7 @@ section .bss
 section .data
     BRIGHTNESS_PATH     db BACKLIGHT_PATH,"brightness",0
     MAX_PATH            db BACKLIGHT_PATH,"max_brightness",0
-    bool_relative       db 0
+    switch_relative     db 0    ; 0 = absolute, 1 = adding, 2 = subtracting
 
 
 section .text
@@ -63,15 +63,49 @@ _interpret:
     ; checking if relative percentage
     mov al, [rbx]
     cmp al, '+'
-    je _i_relative_true
+    je _i_relative_adding
     cmp al, '-'
     jne _i_relative_end
-_i_relative_true:
-    mov byte [bool_relative], 1
+    mov byte [switch_relative], 2
+    inc rbx
+    jmp _i_relative_end
+_i_relative_adding:
+    mov byte [switch_relative], 1
     inc rbx
 _i_relative_end:
 
+    ; checking arg's length
     call strlen
+    cmp rcx, 0
+    je exit_error
+
+    mov rsi, rbx
+    call buffer_to_int
+
+    cmp rbx, 100
+    jg exit_error
+
+    ; determining new percentage
+    cmp byte [switch_relative], 1
+    jb _i_p_absolute
+
+    ; if relative
+    jg _i_p_rel_sub
+    add [percentage_int], bl
+    jmp _i_p_rel_end
+_i_p_rel_sub:
+    sub [percentage_int], bl
+    jc exit_error
+_i_p_rel_end:
+    cmp byte [percentage_int], 100
+    jg exit_error
+    jmp _i_p_end
+
+_i_p_absolute:
+    mov [percentage_int], bl
+
+_i_p_end:
+
 
     jmp exit_normally
 
