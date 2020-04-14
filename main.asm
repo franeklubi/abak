@@ -15,6 +15,7 @@ section .bss
 section .data
     BRIGHTNESS_PATH     db BACKLIGHT_PATH,"brightness",0
     MAX_PATH            db BACKLIGHT_PATH,"max_brightness",0
+    bool_relative       db 0
 
 
 section .text
@@ -56,9 +57,19 @@ _start:
     jmp exit_normally
 
 _interpret:
-    pop rax
-    pop rax         ; getting pointer to second arg off the stack
+    pop rbx
+    pop rbx         ; getting pointer to second arg off the stack
 
+    ; checking if relative percentage
+    mov al, [rbx]
+    cmp al, '+'
+    je _i_relative_true
+    cmp al, '-'
+    jne _i_relative_end
+_i_relative_true:
+    mov byte [bool_relative], 1
+    inc rbx
+_i_relative_end:
 
     jmp exit_normally
 
