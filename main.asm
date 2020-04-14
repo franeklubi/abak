@@ -2,11 +2,11 @@
 %define BACKLIGHT_STRING "intel_backlight"
 %define BACKLIGHT_PATH "/sys/class/backlight/",BACKLIGHT_STRING,"/"
 
-READ_BUFF_SIZE  equ 32
+CHAR_BUFF_SIZE  equ 32
 
 
 section .bss
-    read_buff           resb READ_BUFF_SIZE
+    char_buff           resb CHAR_BUFF_SIZE
     brightness_int      resb 8
     max_brightness_int  resb 8
 
@@ -61,8 +61,8 @@ read_from_file:
     ; reading from file
     mov rdi, r8
     mov rax, 0
-    mov rsi, read_buff
-    mov rdx, READ_BUFF_SIZE
+    mov rsi, char_buff
+    mov rdx, CHAR_BUFF_SIZE
     syscall
 
     mov r9, rax     ; storing buffer length
@@ -77,15 +77,15 @@ read_from_file:
 
     dec r9
     mov rcx, r9     ; storing num of digits
+    mov rsi, char_buff
     call convert_from_buffer
 
     ret
 
 
-; assumes that the read_buff is filled and rcx is set to the number of digits
+; assumes that rsi is set to buffer and rcx is set to the number of digits
 ; returns int in rbx
 convert_from_buffer:
-    mov rsi, read_buff
     xor rbx, rbx
 
 _cfb_loop:
@@ -97,12 +97,15 @@ _cfb_loop:
     ; exponentiation rax*10^rcx
     push rcx
         push rax
+        dec rcx
         mov rax, 1
     _cfb_exp_loop:
+        dec rcx
+        js _cfb_exp_skip
         mov rdx, 10
         mul rdx
-        dec rcx
-        jnz _cfb_exp_loop
+        jmp _cfb_exp_loop
+    _cfb_exp_skip:
 
         mov rdx, rax
         pop rax
