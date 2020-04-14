@@ -71,7 +71,26 @@ _i_relative_true:
     inc rbx
 _i_relative_end:
 
+    call strlen
+
     jmp exit_normally
+
+
+; rbx = buffer pointer
+; returns char count in rcx
+strlen:
+    xor rcx, rcx
+    mov rsi, rbx
+
+_s_loop:
+    lodsb
+    cmp al, 0
+    je _s_end
+    inc rcx
+    jmp _s_loop
+_s_end:
+
+    ret
 
 
 ; put file path into rdi; returns int in rbx
