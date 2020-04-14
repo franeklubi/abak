@@ -9,6 +9,7 @@ section .bss
     char_buff           resb CHAR_BUFF_SIZE
     brightness_int      resb 8
     max_brightness_int  resb 8
+    percentage_int      resb 8
 
 
 section .data
@@ -29,6 +30,13 @@ _start:
     mov rdi, MAX_PATH
     call read_from_file
     mov [max_brightness_int], rbx
+
+    ; calculating percentage
+    mov rax, [brightness_int]
+    mov rcx, 100
+    mul rcx
+    div rbx
+    mov [percentage_int], rax
 
     pop rax         ; getting argc off the stack
     cmp rax, 1
@@ -92,7 +100,6 @@ _cfb_loop:
     xor rax, rax
     lodsb
     sub rax, 0x30   ; extracting digit
-
 
     ; exponentiation rax*10^rcx
     push rcx

@@ -11,6 +11,7 @@ main: main.asm
 run: main.asm
 	make
 	./abak 10
+	./abak
 
 strace: main.asm
 	make
