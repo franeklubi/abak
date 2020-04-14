@@ -106,6 +106,12 @@ _i_p_absolute:
 
 _i_p_end:
 
+    ; calculating new brightness
+    mov rax, [percentage_int]
+    mov rbx, [max_brightness_int]
+    mul rbx
+    mov rbx, 100
+    div rbx
 
     jmp exit_normally
 
