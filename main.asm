@@ -49,6 +49,7 @@ _start:
     add rdi, rcx
     mov byte [rdi], 10  ; storing newline
 
+    ; printing percentage
     mov rsi, char_buff
     mov rdx, rcx
     call print_buffer
@@ -57,6 +58,7 @@ _start:
 _interpret:
     pop rax
     pop rax         ; getting pointer to second arg off the stack
+
 
     jmp exit_normally
 
@@ -108,6 +110,9 @@ _cfb_loop:
     xor rax, rax
     lodsb
     sub rax, 0x30   ; extracting digit
+    jc exit_error
+    cmp rax, 9
+    jg exit_error
 
     ; exponentiation rax*10^rcx
     push rcx
