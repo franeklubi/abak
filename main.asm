@@ -16,8 +16,6 @@ section .data
     BRIGHTNESS_PATH     db BACKLIGHT_PATH,"brightness",0
     MAX_PATH            db BACKLIGHT_PATH,"max_brightness",0
 
-    dummy_percentage    db "45",10
-
 
 section .text
     global _start
@@ -38,12 +36,22 @@ _start:
     div rbx
     mov [percentage_int], rax
 
-    pop rax         ; getting argc off the stack
+    ; getting argc off the stack
+    pop rax
     cmp rax, 1
     jne _interpret  ; if argc != 1
 
-    call print_percentage
+    ; converting percentage_int to string
+    mov rdi, char_buff
+    mov rsi, [percentage_int]
+    call int_to_buffer  ; rax already set after percentage calculation
+    inc rcx
+    add rdi, rcx
+    mov byte [rdi], 10  ; storing newline
 
+    mov rsi, char_buff
+    mov rdx, rcx
+    call print_buffer
     jmp exit_normally
 
 _interpret:
@@ -86,14 +94,14 @@ read_from_file:
     dec r9
     mov rcx, r9     ; storing num of digits
     mov rsi, char_buff
-    call convert_from_buffer
+    call buffer_to_int
 
     ret
 
 
 ; assumes that rsi is set to buffer and rcx is set to the number of digits
 ; returns int in rbx
-convert_from_buffer:
+buffer_to_int:
     xor rbx, rbx
 
 _cfb_loop:
@@ -128,11 +136,51 @@ _cfb_loop:
     ret
 
 
-print_percentage:
+; put buffer pointer in rdi and int in rsi
+; returns char count in rcx
+int_to_buffer:
+    xor rcx, rcx
+    mov rbx, 10
+    mov rax, rsi
+
+    ; calculating int's char count
+_itb_loop_len:
+    xor rdx, rdx
+    div rbx
+
+    inc rcx         ; incrementing char count
+
+    test rax, rax
+    jnz _itb_loop_len
+
+    add rdi, rcx    ; moving buffer pointer ahead
+    dec rdi
+    std
+    mov rax, rsi    ; restoring the original int
+
+    ; storing in buffer
+_itb_loop_stos:
+    xor rdx, rdx
+    div rbx
+
+    add rdx, 0x30   ; converting int to char
+    xchg rax, rdx   ; saving rax's value
+    stosb           ; storing char in buffer
+    mov rax, rdx    ; restoring rax's value
+
+    test rax, rax
+    jnz _itb_loop_stos
+
+    cld
+
+    ret
+
+
+; rsi = buffer pointer
+; rdx = character count
+print_buffer:
     mov rax, 1
     mov rdi, 1
-    mov rsi, dummy_percentage
-    mov rdx, 3
     syscall
 
     ret
