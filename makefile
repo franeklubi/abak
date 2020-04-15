@@ -3,22 +3,31 @@ ifndef .VERBOSE
 .SILENT:
 endif
 
+ARG=10
+
 main: main.asm
 	nasm ./main.asm -oabak.o -felf64
 	ld abak.o -oabak
 	rm abak.o
+
+permissions: main.asm
+	make
 	sudo chown root:root ./abak
 	sudo chmod +s ./abak
 
+install: main.asm
+	make permissions
+	sudo mv abak /bin/
+
 run: main.asm
-	make
-	./abak 10
+	make permissions
+	./abak $(ARG)
 	./abak
 
 strace: main.asm
 	make
 	sudo strace ./abak
-	sudo strace ./abak 20
+	sudo strace ./abak $(ARG)
 
 debug: main.asm
 	make
