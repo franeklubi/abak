@@ -12,6 +12,7 @@ main: main.asm
 
 permissions: main.asm
 	make
+	strip -s ./abak
 	sudo chown root:root ./abak
 	sudo chmod +s ./abak
 
