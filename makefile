@@ -7,6 +7,8 @@ main: main.asm
 	nasm ./main.asm -oabak.o -felf64
 	ld abak.o -oabak
 	rm abak.o
+	sudo chown root:root ./abak
+	sudo chmod +s ./abak
 
 run: main.asm
 	make
@@ -15,8 +17,9 @@ run: main.asm
 
 strace: main.asm
 	make
-	strace ./abak
+	sudo strace ./abak
+	sudo strace ./abak 20
 
 debug: main.asm
 	make
-	gdb abak
+	sudo gdb abak

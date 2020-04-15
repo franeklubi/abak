@@ -113,6 +113,16 @@ _i_p_end:
     mov rbx, 100
     div rbx
 
+    ; creating string from the new brightness value
+    mov rsi, rax
+    mov rdi, char_buff
+    call int_to_buffer
+
+    ; writing the new brightness value
+    mov rdi, BRIGHTNESS_PATH
+    mov r9, rcx
+    call write_to_file
+
     jmp exit_normally
 
 
@@ -144,10 +154,10 @@ read_from_file:
     test rax, rax
     js exit_error   ; if the file couldn't be opened
 
-    mov r8, rax     ; storing the posix file descriptor in r8
+    push rax        ; storing the posix file descriptor on stack
 
     ; reading from file
-    mov rdi, r8
+    mov rdi, rax
     mov rax, 0
     mov rsi, char_buff
     mov rdx, CHAR_BUFF_SIZE
@@ -157,7 +167,7 @@ read_from_file:
 
     ; closing the file
     mov rax, 3      ; sys close
-    mov rdi, r8
+    pop rdi
     syscall
 
     test rax, rax
@@ -167,6 +177,39 @@ read_from_file:
     mov rcx, r9     ; storing num of digits
     mov rsi, char_buff
     call buffer_to_int
+
+    ret
+
+
+; rdi = file path
+; r9 = char count
+write_to_file:
+    ; opening the file
+    mov rax, 2      ; sys open
+    mov rsi, 1      ; writeonly
+    mov rdx, 0644o
+    syscall
+
+    test rax, rax
+    js exit_error
+
+    push rax        ; pushing the fd
+
+    mov rdi, rax
+    mov rax, 1      ; sys write
+    mov rsi, char_buff
+    mov rdx, r9
+    syscall
+
+    test rax, rax
+    js exit_error
+
+    mov rax, 3      ; sys close
+    pop rdi
+    syscall
+
+    test rax, rax
+    js exit_error
 
     ret
 
